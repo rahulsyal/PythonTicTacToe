@@ -1,0 +1,259 @@
+"""""""""""""""""""""
+Rahul Syal
+CS 100 2014F Section H03
+TTT Part 5 (FINAL), December 3, 2014
+"""""""""""""""""""""
+def tttDrawGrid(t, size): #fxn was coded by Junilda Spirollari
+    #draw 2 horizontal lines
+    for i in range(2):
+        t.up()
+        t.goto(0,size/3*(i+1))
+        t.setheading(0)
+        t.down()
+        t.fd(size)
+        t.backward(size)
+    #draw 2 vertical lines
+    for i in range(2):
+        t.up()
+        t.goto(size/3*(i+1), 0)
+        t.setheading(90)
+        t.down()
+        t.fd(size)
+        t.backward(size)
+
+def tttDrawMove (turtle, row, column, token, length):
+    turtle.up()
+    turtle.goto(0,0)
+    turtle.setheading(0)
+    if column == 0:
+        turtle.up()
+        turtle.forward(length/2)
+    elif column == 1:
+        turtle.up()
+        turtle.forward(length+(length/2))
+    elif column == 2:
+        turtle.up()
+        turtle.forward((2*length) + (length/2))
+    if row == 1:
+        turtle.up()
+        turtle.left(90)
+        turtle.forward(length)
+    elif row == 2:
+        turtle.up()
+        turtle.left(90)
+        turtle.forward(2*length)
+    if token == 'O':
+        turtle.setheading(90)
+        turtle.forward(.1*length)
+        turtle.setheading(0)
+        turtle.down()
+        turtle.circle(.8*length/2)
+    if token == 'X':
+        turtle.up()
+        turtle.setheading(90)
+        turtle.forward(length/2)
+        turtle.down()
+        turtle.setheading(45)
+        turtle.forward(length/2)
+        turtle.up()
+        turtle.backward(length/2)
+        turtle.setheading(225)
+        turtle.down()
+        turtle.forward(length/2)
+        turtle.backward(length/2)
+        turtle.setheading(135)
+        turtle.forward(length/2)
+        turtle.up()
+        turtle.backward(length/2)
+        turtle.setheading(315)
+        turtle.down()
+        turtle.forward(length/2)
+        turtle.backward(length/2)
+    turtle.up()
+    turtle.goto(0,0)
+def tttGetMove():
+    if token == 'X':
+        name = firstPlayerName
+    elif token == 'O':
+        name = secondPlayerName 
+    while True:
+        row = int(input(name + ", please enter the row of the move."))
+        while not(row >= 0 and row <= 2):
+            row = int(input("Invalid row." + name + ",please enter the row of the move."))
+        
+        column = int(input(name + ", please enter the column of the move."))
+        while not(column >= 0 and column <= 2):
+            column = int(input("Invalid column." + name + ",please enter the column of the move."))
+            
+        if isOccupied(row, column): #if true, space is already taken
+            print(name + ", the space you entered is already occupied.")
+        else: #else break out of the loop
+            move = str(row) + str(column)
+            history.append(move)
+            break
+    return row,column
+
+def isOccupied(r, c):
+    move = str(r) + str(c)
+    if move in history:
+        return True
+    elif move not in history:
+        return False
+
+def tttPlayGame():
+    global history
+    history = []
+    global token
+    token = 'X'
+    tttDrawGrid(t, 300)
+    global board
+    board = [['-','-','-'],['-','-','-'], ['-','-','-']] #represents board in the initial state
+    #board[row][column]
+
+    global triplets
+    triplets = []
+    #winning horizontally
+    triplets.append([board[0][0],board[0][1],board[0][2]])
+    triplets.append([board[1][0],board[1][1],board[1][2]])
+    triplets.append([board[2][0],board[2][1],board[2][2]])
+    #winning vertically
+    triplets.append([board[0][0],board[1][0],board[2][0]])
+    triplets.append([board[0][1],board[1][1],board[2][1]])
+    triplets.append([board[0][2],board[1][2],board[2][2]])
+    #winning diagonally
+    triplets.append([board[0][0],board[1][1],board[2][2]])
+    triplets.append([board[2][0],board[1][1],board[0][2]])
+
+    turns = 0
+    winner = False
+    draw = False
+    firstPlayer = input("If the first player (x) is computer, enter 'c'. Otherwise, enter 'h'. ")
+    if firstPlayer == 'h':
+        global firstPlayerName
+        firstPlayerName = input("Okay, what is your name, human? ")
+    secondPlayer= input("If the second player (o) is computer, enter 'c'. Otherwise, enter 'h'. ")
+    if secondPlayer == 'h':
+        global secondPlayerName
+        secondPlayerName = input("Okay, what is your name, human? ")
+    while True:
+        if turns == 9:
+            break
+        if token == 'X':
+            if firstPlayer == 'h':
+                tup = tttGetMove()
+                row = tup[0]
+                column = tup[1]
+            elif firstPlayer == 'c':
+                tup = computerMove()
+                row = tup[0]
+                column = tup[1]
+                print("Computer has selected its move!")
+        if token == 'O':
+            if secondPlayer == 'h':
+                tup = tttGetMove()
+                row = tup[0]
+                column = tup[1]
+            elif secondPlayer == 'c':
+                tup = computerMove()
+                row = tup[0]
+                column = tup[1]
+                print("Computer has selected its move!")
+        tttDrawMove(t, row, column, token, 100)
+        board[row][column] = token
+        updateTriplets(board)
+        if xWin(triplets):
+            winner = True
+            if firstPlayer == 'h':
+                winnerName = firstPlayerName
+            elif firstPlayer == 'c':
+                winnerName = 'Computer'
+            break
+        if oWin(triplets):
+            winner = True
+            if secondPlayer == 'h':
+                winnerName = secondPlayerName
+            elif firstPlayer == 'c':
+                winnerName = 'Computer'
+            break
+        if isDraw(triplets):
+            print("The game has drawn, no one can win!")
+            draw = True
+            break
+        turns +=1
+        if token == 'X':
+            token = 'O'
+            continue
+        token = 'X'
+    if not(draw):    
+        if winner:
+            print("Congrats! " + winnerName + " (" + token + ") " + "has won!")
+        else:
+            print("Tie! No one wins." + '\n')
+
+def updateTriplets(board):
+    #we want the board values to go into the triplet values
+    
+    #winning horizontally
+    triplets[0] = [board[0][0],board[0][1],board[0][2]]
+    triplets[1] = [board[1][0],board[1][1],board[1][2]]
+    triplets[2] = [board[2][0],board[2][1],board[2][2]]
+    #winning vertically
+    triplets[3] = [board[0][0],board[1][0],board[2][0]]
+    triplets[4] = [board[0][1],board[1][1],board[2][1]]
+    triplets[5] = [board[0][2],board[1][2],board[2][2]]
+    #winning diagonally
+    triplets[6] = [board[0][0],board[1][1],board[2][2]]
+    triplets[7] = [board[2][0],board[1][1],board[0][2]]
+                
+def xWin(triplets):
+    #return true if x has three in a row, false otherwise
+    win = False
+    for combo in triplets:
+        if (combo[0] == 'X') and (combo[1] == 'X') and (combo[2] == 'X'):
+            win = True
+    return win
+
+def oWin(triplets):
+    #return true if x has three in a row, false otherwise
+    win = False
+    for combo in triplets:
+        if (combo[0] == 'O') and (combo[1] == 'O') and (combo[2] == 'O'):
+            win = True
+    return win
+
+#Problem 1
+def isDraw(triplets):
+    for triplet in triplets:
+        if not('X' in triplet and 'O' in triplet):
+            return False
+    return True
+#Problem 2/3/4 are written within the code
+
+def computerMove():
+    import random
+    while True:
+        row = random.randint(0,2)
+        column = random.randint(0,2)
+        if isOccupied(row,column):
+            continue
+        else:
+            move = str(row) + str(column)
+            history.append(move)
+            break
+    return row, column
+
+import turtle
+t= turtle.Turtle()
+s = turtle.Screen()
+while True:
+    tttPlayGame()
+    playAgain = input("Play again? 'y' for yes, 'q' to quit: ")
+    if playAgain == 'q':
+        break
+    elif playAgain == 'y':
+        t.clear()
+        tttPlayGame()
+
+
+
+
